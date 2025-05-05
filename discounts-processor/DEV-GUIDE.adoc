@@ -1,0 +1,161 @@
+= Developer Guide
+
+[[developer-tips]]
+== Developer Tips
+
+=== Gradle Commands
+
+==== Skipping Tests
+
+To skip test execution during build:
+[,console]
+----
+$ ./gradlew build -x test
+----
+
+==== Code Formatting
+
+The project uses Spotless for code formatting. Common commands:
+
+[,console]
+----
+$ ./gradlew spotlessCheck    # Check code formatting
+$ ./gradlew spotlessApply    # Apply code formatting
+----
+
+TIP: To automatically format code before each build, the project already includes `spotlessApply` as a build dependency.
+
+==== Running Specific Tests
+
+To run a specific test class:
+[,console]
+----
+$ ./gradlew test --tests "com.example.processor.MostViewedProcessorTest"
+----
+
+To run only integration tests:
+[,console]
+----
+$ ./gradlew integrationTest
+----
+
+////
+=== Git Configuration
+
+The project includes a pre-commit hook to ensure code quality. To set them up:
+
+[,console]
+----
+$ .hooks/setup.sh
+----
+
+WARNING: This is not fully functional yet because discounts-processor is not a Git project (which is in the parent directory).
+
+This script will:
+
+* Configure Git to use project-specific hooks
+* Enable automatic code formatting check before commits
+* Run unit tests before commits
+
+TIP: If you need to bypass hooks temporarily, use `git commit --no-verify`
+////
+
+=== IDE Configuration
+
+==== IntelliJ IDEA
+TODO
+
+==== VS Code
+
+* Install https://marketplace.visualstudio.com/items/?itemName=EditorConfig.EditorConfig["EditorConfig"]
+** Configure "Editor: Format On Save" setting
+* Install https://code.visualstudio.com/docs/java/extensions["Java extensions for Visual Studio Code"]
+** Install https://marketplace.visualstudio.com/items/?itemName=SonarSource.sonarlint-vscode["SonarQubei for IDE"]
+** Install https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-gradle["Gradle for Java"]
+* Install https://marketplace.visualstudio.com/items/?itemName=mathiasfrohlich.Kotlin["Kotlin Language"]
+* Install https://marketplace.visualstudio.com/items/?itemName=asciidoctor.asciidoctor-vscode["AsciiDoc"]
+
+=== Documentation
+
+==== README Generation
+
+To rebuild the documentation:
+[,console]
+----
+$ ./README.sh    # Generates README.html and updates other formats
+----
+
+////
+==== API Documentation
+
+Generate JavaDoc and KDoc:
+[,console]
+----
+$ ./gradlew javadoc    # For Java classes
+$ ./gradlew dokka      # For Kotlin classes
+----
+////
+
+=== Docker Tips
+
+==== Clean Environment
+
+To completely clean up Docker resources:
+[,console]
+----
+$ docker compose down -v --remove-orphans
+$ docker system prune -f    # Remove unused containers/images
+----
+
+==== Quick Redpanda Access
+
+The project includes convenient scripts for Redpanda operations:
+[,console]
+----
+$ ./redpanda.sh up      # Start Redpanda
+$ ./redpanda.sh down    # Stop Redpanda
+----
+
+== Troubleshooting
+
+Sometimes, you may need to clean up Java processss to start fresh.
+If you have strange issues while testing the application, like in the following output:
+
+[,console]
+----
+$ run
+Starting Discounts Processor...
+Console output will be logged to: private/logs/run.log
+10:08:18.621 Loading configuration from application.properties...
+10:08:18.623 Configuration loaded:
+10:08:18.626   Enabled processors: ContinuousView
+10:08:18.628   Continuous view implementation: 2
+10:08:18.628   Bootstrap servers: localhost:19092
+10:08:18.628   Input topic: snowplow-enriched-good
+10:08:18.628   Output topic: shopper-discounts
+10:08:18.628   Group ID: discounts-processor
+10:08:18.628   Auto offset reset: earliest
+10:08:18.629   Window duration: 300s
+10:08:18.629   Ping interval: 10s
+10:08:18.629   Minimum pings: 8
+10:08:18.629   Discount rate: 0.1
+10:08:18.630 Initializing Discounts Processor...
+10:08:18.739 Configuring ContinuousViewProcessor (implementation 2)...
+Exception in thread "main" org.apache.kafka.streams.errors.StreamsException: Unable to initialize state, this can happen if multiple instances of Kafka Streams are running in the same state directory (current state directory is [/tmp/kafka-streams/discounts-processor]
+        at org.apache.kafka.streams.processor.internals.StateDirectory.initializeProcessId(StateDirectory.java:191)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:879)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:862)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:832)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:744)
+        at com.example.DiscountsProcessor.start(DiscountsProcessor.java:160)
+        at com.example.DiscountsProcessor.main(DiscountsProcessor.java:184)
+Application terminated successfully
+----
+
+Run these commands to clean up:
+
+[,console]
+----
+$ sudo pkill java
+$ rm -rf /tmp/kafka-streams/discounts-processor/
+----
